@@ -1,28 +1,24 @@
-import { createClient, print } from 'redis';
+import { createClient, print } from "redis";
+const client = createClient();
+import { promisify } from "util";
+const hgetall = promisify(client.hgetall).bind(client);
 
-const redisClient = createClient();
+async function hashValue() {
+  const values = {
+    Portland: 50,
+    Seattle: 80,
+    "New York": 20,
+    Bogota: 20,
+    Cali: 40,
+    Paris: 2,
+  };
 
-redisClient.on('connect', function() {
-  console.log('Redis client connected to the server');
-});
-
-redisClient.on('error', function(error) {
-  console.log(`Redis client not connected to the server: ${error}`);
-});
-
-//set hash key-value in HolbertonSchools list
-redisClient.hset('HolbertonSchools', 'Portland', '50', print);
-redisClient.hset('HolbertonSchools', 'Seattle', '80', print);
-redisClient.hset('HolbertonSchools', 'New York', '20', print);
-redisClient.hset('HolbertonSchools', 'Bogota', '20', print);
-redisClient.hset('HolbertonSchools', 'Cali', '40', print);
-redisClient.hset('HolbertonSchools', 'Paris', '2', print);
-
-// retrieve all elements stored in HolbertonSchools list
-redisClient.hgetall('HolbertonSchools', function (error, result) {
-  if (error) {
-    console.log(error);
-    throw error;
+  for (const item in values) {
+    client.hset("HolbertonSchools", item, values[item], print);
   }
-  console.log(result);
-});
+
+  const result = await hgetall("HolbertonSchools");
+  consoole.log(result);
+}
+
+hashValue();
