@@ -1,7 +1,14 @@
-import { createClient, print } from "redis";
+import { createClient } from "redis";
+
 const client = createClient();
-import { promisify } from "util";
-const hgetall = promisify(client.hgetall).bind(client);
+
+client.on("connect", () => {
+  console.log("Redis client connected to the server");
+});
+
+client.on("error", (error) => {
+  console.error(`Redis client not connected to the server: ${error}`);
+});
 
 async function hashValue() {
   const values = {
@@ -13,12 +20,21 @@ async function hashValue() {
     Paris: 2,
   };
 
-  for (const item in values) {
-    client.hset("HolbertonSchools", item, values[item], print);
-  }
+  try {
+    await client.connect(); // Explicitly connect the client
 
-  const result = await hgetall("HolbertonSchools");
-  consoole.log(result);
+    for (const [key, value] of Object.entries(values)) {
+      await client.hSet("HolbertonSchools", key, value);
+    }
+
+    const result = await client.hGetAll("HolbertonSchools");
+    console.log(result);
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+  } finally {
+    await client.disconnect(); // Disconnect after operations
+  }
 }
 
 hashValue();
+
