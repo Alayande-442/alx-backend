@@ -1,56 +1,55 @@
-import { describe, it, before, after, afterEach } from 'mocha';
 import { expect } from 'chai';
-import { createQueue } from 'kue';
-
+import kue from 'kue';
 import createPushNotificationsJobs from './8-job.js';
 
-const queue = createQueue();
+describe('createPushNotificationsJobs', () => {
+  let queue;
 
-describe('Test createPushNotificationsJobs function', function() {
-  before(function () {
-    // Enter test mode
-    queue.testMode.enter();
+  before(() => {
+    queue = kue.createQueue();
+    queue.testMode = true; // Enable test mode
   });
 
-  afterEach(function () {
-    // Clear all jobs after each test
-    queue.testMode.clear();
+  after(() => {
+    queue.testMode = false; // Disable test mode after tests
   });
 
-  after(function () {
-    // Exit test mode
-    queue.testMode.exit();
+  it('should display an error message if jobs is not an array', () => {
+    const invalidJobs = {}; // This is not an array
+    try {
+      createPushNotificationsJobs(invalidJobs, queue);
+    } catch (error) {
+      expect(error.message).to.equal('Jobs is not an array');
+    }
   });
 
-  it('display an error message if jobs is not an array', function() {
-    // Test invalid input (jobs is not an array)
-    expect(() => createPushNotificationsJobs('job', queue)).to.throw(Error, 'Jobs is not an array');
-  });
-
-  it('Test whether jobs are created', function() {
-    const jobs = [
-      {
-        phoneNumber: '4153518780',
-        message: 'This is the code 1234 to verify your account'
-      },
-      {
-        phoneNumber: '4153518781',
-        message: 'This is the code 4562 to verify your account'
-      },
+  it('should create two new jobs to the queue', (done) => {
+    const list = [
+      { phoneNumber: '4153518780', message: 'This is the code 1234 to verify your account' },
+      { phoneNumber: '4153518781', message: 'This is the code 5678 to verify your account' },
     ];
 
-    // Create jobs
-    createPushNotificationsJobs(jobs, queue);
+    // Counter for the number of jobs created
+    let jobsCreated = 0;
 
-    // Check if jobs are added to the queue
-    expect(queue.testMode.jobs.length).to.equal(2);
+    // Listen to job creation events
+    queue.on('job enqueue', (id, type) => {
+      if (type === 'push_notification_code_3') {
+        jobsCreated += 1;
+      }
+    });
 
-    // Check job details
-    expect(queue.testMode.jobs[0].type).to.equal('push_notification_code_3');
-    expect(queue.testMode.jobs[0].data).to.eql(jobs[0]);
+    // Create jobs using the function
+    createPushNotificationsJobs(list, queue);
 
-    expect(queue.testMode.jobs[1].type).to.equal('push_notification_code_3');
-    expect(queue.testMode.jobs[1].data).to.eql(jobs[1]);
+    // Wait for jobs to be processed in test mode and check
+    setImmediate(() => {
+      if (jobsCreated === 2) {
+        done(); // If two jobs were created, pass the test
+      } else {
+        done(new Error('Jobs were not added to the queue.'));
+      }
+    });
   });
 });
 

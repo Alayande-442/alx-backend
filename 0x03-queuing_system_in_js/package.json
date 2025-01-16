@@ -1,19 +1,20 @@
 {
   "name": "queuing_system_in_js",
   "version": "1.0.0",
-  "description": "",
+  "description": "queuing system",
   "main": "index.js",
   "scripts": {
-    "lint": "./node_modules/.bin/eslint",
+    "lint": "eslint",
     "check-lint": "lint [0-9]*.js",
-    "test": "./node_modules/.bin/mocha --require @babel/register --exit",
+    "test": "mocha --require @babel/register --exit",
     "dev": "nodemon --exec babel-node --presets @babel/preset-env"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "chai-http": "^4.3.0",
-    "express": "^4.17.1",
+    "express": "^4.21.2",
+    "ioredis": "^5.4.2",
     "kue": "^0.11.6",
     "redis": "^2.8.0"
   },
@@ -32,5 +33,6 @@
     "nodemon": "^2.0.2",
     "request": "^2.88.0",
     "sinon": "^7.5.0"
-  }
+  },
+  "keywords": []
 }
